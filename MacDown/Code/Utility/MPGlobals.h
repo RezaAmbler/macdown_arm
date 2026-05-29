@@ -27,3 +27,11 @@ static NSString * const kMPVersionKey = @"version";
 
 static NSString * const kMPFilesToOpenKey = @"filesToOpenOnNextLaunch";
 static NSString * const kMPPipedContentFileToOpen = @"pipedContentFileToOpenOnNextLaunch";
+
+// Editor/preview appearance modes selectable from View ▸ Appearance.
+// Light is the historical default, so it maps to zero (no defaults migration).
+typedef NS_ENUM(NSInteger, MPViewMode) {
+    MPViewModeLight = 0,
+    MPViewModeDark  = 1,
+    MPViewModeSepia = 2,
+};

@@ -79,6 +79,9 @@ extern NSString * const MPDidDetectFreshInstallationNotification;
 @property (nonatomic, assign) NSFont *editorBaseFont;
 @property (readonly) NSString *editorUnorderedListMarker;
 
+// Selected View ▸ Appearance mode (MPViewMode). Default 0 == Light.
+@property (assign) NSInteger appViewMode;
+
 - (instancetype)init;
 
 // Convinience methods.

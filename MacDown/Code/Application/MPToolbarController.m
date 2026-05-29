@@ -50,7 +50,12 @@ static CGFloat itemWidth = 37;
     // Set up layout drop down alternatives. title will be set in validateUserInterfaceItem:
     NSMenuItem *toggleEditorMenuItem = [[NSMenuItem alloc] initWithTitle:@"" action:@selector(toggleEditorPane:) keyEquivalent:@"e"];
     NSMenuItem *togglePreviewMenuItem = [[NSMenuItem alloc] initWithTitle:@"" action:@selector(togglePreviewPane:) keyEquivalent:@"p"];
-    
+
+    // Appearance drop-down options (Light / Dark / Sepia).
+    NSMenuItem *lightModeMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Light", @"Light appearance toolbar option") action:@selector(setLightMode:) keyEquivalent:@""];
+    NSMenuItem *darkModeMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Dark", @"Dark appearance toolbar option") action:@selector(setDarkMode:) keyEquivalent:@""];
+    NSMenuItem *sepiaModeMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Sepia", @"Sepia appearance toolbar option") action:@selector(setSepiaMode:) keyEquivalent:@""];
+
     // Set up all available toolbar items
     self->toolbarItems = @[
         [self toolbarItemGroupWithIdentifier:@"indent-group" separated:YES label:NSLocalizedString(@"Shift Left/Right", @"") items:@[
@@ -86,6 +91,17 @@ static CGFloat itemWidth = 37;
         [self toolbarItemDropDownWithIdentifier:@"layout" label:NSLocalizedString(@"Layout", @"Layout toolbar button") icon:@"ToolbarIconEditorAndPreview" menuItems:
             @[
               toggleEditorMenuItem, togglePreviewMenuItem
+            ]
+        ],
+        // Appended at the end so existing indices in toolbarDefaultItemIdentifiers: stay valid.
+        [self toolbarItemGroupWithIdentifier:@"zoom-group" separated:YES label:NSLocalizedString(@"Zoom Out/In", @"") items:@[
+            [self toolbarItemWithIdentifier:@"zoom-out" label:NSLocalizedString(@"Zoom Out", @"Zoom out toolbar button") icon:@"ToolbarIconZoomOut" action:@selector(makeFontSmaller:)],
+            [self toolbarItemWithIdentifier:@"zoom-in" label:NSLocalizedString(@"Zoom In", @"Zoom in toolbar button") icon:@"ToolbarIconZoomIn" action:@selector(makeFontLarger:)]
+            ]
+        ],
+        [self toolbarItemDropDownWithIdentifier:@"appearance" label:NSLocalizedString(@"Appearance", @"Appearance toolbar button") icon:@"ToolbarIconAppearance" menuItems:
+            @[
+              lightModeMenuItem, darkModeMenuItem, sepiaModeMenuItem
             ]
         ]
     ];
@@ -135,33 +151,39 @@ static CGFloat itemWidth = 37;
     // Add space after the specified toolbar item indices
     int spaceAfterIndices[] = {}; // No space in the default set
     int flexibleSpaceAfterIndices[] = {2, 3, 5, 7, 11};
+    const int spaceAfterCount = (int)(sizeof(spaceAfterIndices) / sizeof(int));
+    const int flexibleSpaceAfterCount =
+        (int)(sizeof(flexibleSpaceAfterIndices) / sizeof(int));
     int i = 0;
     int j = 0;
     int k = 0;
-    
+
     for (NSString *itemIdentifier in orderedToolbarItemIdentifiers)
     {
         // exclude some toolbar items from the default toolbar
         if ([itemIdentifier  isEqual: @"comment"]
             || [itemIdentifier  isEqual: @"highlight"]
-            || [itemIdentifier  isEqual: @"strikethrough"]) {
+            || [itemIdentifier  isEqual: @"strikethrough"]
+            || [itemIdentifier  isEqual: @"appearance"]) {
             // do nothing here
         }else {
             [defaultItemIdentifiers addObject:itemIdentifier];
         }
-        
-        if (i == spaceAfterIndices[j])
+
+        // Bounds-guard the index arrays so items can be appended to
+        // toolbarItems without walking off the end of these C arrays.
+        if (j < spaceAfterCount && i == spaceAfterIndices[j])
         {
             [defaultItemIdentifiers addObject:NSToolbarSpaceItemIdentifier];
             j++;
         }
-        
-        if (i == flexibleSpaceAfterIndices[k])
+
+        if (k < flexibleSpaceAfterCount && i == flexibleSpaceAfterIndices[k])
         {
             [defaultItemIdentifiers addObject:NSToolbarFlexibleSpaceItemIdentifier];
             k++;
         }
-        
+
         i++;
     }
     

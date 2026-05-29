@@ -30,9 +30,17 @@
 #import "MPMathJaxListener.h"
 #import "WebView+WebViewPrivateHeaders.h"
 #import "MPToolbarController.h"
+#import "MPGlobals.h"
 #import <JavaScriptCore/JavaScriptCore.h>
 
 static NSString * const kMPDefaultAutosaveName = @"Untitled";
+
+// Editor font-zoom bounds and the default size used by "Actual Size".
+// kMPDefaultEditorFontPointSize mirrors the value in MPPreferences.m (not
+// exported), kept in sync here intentionally.
+static CGFloat const kMPEditorFontPointSizeDefault = 14.0;
+static CGFloat const kMPEditorFontPointSizeMin = 6.0;
+static CGFloat const kMPEditorFontPointSizeMax = 72.0;
 
 
 NS_INLINE NSString *MPEditorPreferenceKeyWithValueKey(NSString *key)
@@ -456,6 +464,9 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         [self setupEditor:nil];
         [self redrawDivider];
         [self reloadFromLoadedString];
+        // The editor/preview styles persist on their own; only the window
+        // chrome needs reapplying to match the saved appearance mode.
+        [self applyWindowAppearanceForViewMode:self.preferences.appViewMode];
     }];
 }
 
@@ -683,6 +694,18 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
                           @"Toggle editor pane menu item") :
         NSLocalizedString(@"Restore Editor Pane",
                           @"Toggle editor pane menu item");
+    }
+    else if ((action == @selector(setLightMode:)
+              || action == @selector(setDarkMode:)
+              || action == @selector(setSepiaMode:))
+             && [(NSObject *)item isKindOfClass:[NSMenuItem class]])
+    {
+        NSMenuItem *it = (NSMenuItem *)item;
+        MPViewMode mode = (action == @selector(setDarkMode:)) ? MPViewModeDark
+                        : (action == @selector(setSepiaMode:)) ? MPViewModeSepia
+                        : MPViewModeLight;
+        it.state = (self.preferences.appViewMode == mode)
+            ? NSControlStateValueOn : NSControlStateValueOff;
     }
     return result;
 }
@@ -1466,6 +1489,94 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 - (IBAction)setEqualSplit:(id)sender
 {
     [self setSplitViewDividerLocation:0.5];
+}
+
+#pragma mark - Font zoom
+
+- (IBAction)makeFontLarger:(id)sender
+{
+    [self changeEditorFontSizeBy:1.0];
+}
+
+- (IBAction)makeFontSmaller:(id)sender
+{
+    [self changeEditorFontSizeBy:-1.0];
+}
+
+- (IBAction)resetFontSize:(id)sender
+{
+    NSFont *font = [self.preferences.editorBaseFont copy];
+    if (!font)
+        return;
+    self.preferences.editorBaseFont =
+        [NSFont fontWithName:font.fontName size:kMPEditorFontPointSizeDefault];
+}
+
+// Nudges the stored base font size. Its setter writes editorBaseFontInfo,
+// which is KVO-observed and flows through setupEditor: to update the editor
+// font (and the preview zoom, when previewZoomRelativeToBaseFontSize is on).
+- (void)changeEditorFontSizeBy:(CGFloat)delta
+{
+    NSFont *font = [self.preferences.editorBaseFont copy];
+    if (!font)
+        return;
+    CGFloat size = MIN(MAX(font.pointSize + delta, kMPEditorFontPointSizeMin),
+                       kMPEditorFontPointSizeMax);
+    self.preferences.editorBaseFont = [NSFont fontWithName:font.fontName
+                                                      size:size];
+}
+
+#pragma mark - View modes (Light / Dark / Sepia)
+
+- (IBAction)setLightMode:(id)sender
+{
+    [self applyViewMode:MPViewModeLight];
+}
+
+- (IBAction)setDarkMode:(id)sender
+{
+    [self applyViewMode:MPViewModeDark];
+}
+
+- (IBAction)setSepiaMode:(id)sender
+{
+    [self applyViewMode:MPViewModeSepia];
+}
+
+// Swaps the editor theme (editorStyleName, KVO -> setupEditor:) and preview
+// CSS (htmlStyleName, picked up by userDefaultsDidChange: -> the renderer),
+// then matches the window chrome via NSAppearance.
+- (void)applyViewMode:(MPViewMode)mode
+{
+    self.preferences.appViewMode = mode;
+    switch (mode)
+    {
+        case MPViewModeDark:
+            self.preferences.editorStyleName = @"Mou Night";
+            self.preferences.htmlStyleName = @"Clearness Dark";
+            break;
+        case MPViewModeSepia:
+            self.preferences.editorStyleName = @"Sepia";
+            self.preferences.htmlStyleName = @"Sepia";
+            break;
+        case MPViewModeLight:
+        default:
+            self.preferences.editorStyleName = @"Tomorrow+";   // current default
+            self.preferences.htmlStyleName = @"GitHub2";       // current default
+            break;
+    }
+    [self applyWindowAppearanceForViewMode:mode];
+}
+
+- (void)applyWindowAppearanceForViewMode:(MPViewMode)mode
+{
+    if (@available(macOS 10.14, *))
+    {
+        NSWindow *window = self.windowControllers.firstObject.window;
+        NSString *name = (mode == MPViewModeDark) ? NSAppearanceNameDarkAqua
+                                                   : NSAppearanceNameAqua;
+        window.appearance = [NSAppearance appearanceNamed:name];
+    }
 }
 
 - (IBAction)toggleToolbar:(id)sender

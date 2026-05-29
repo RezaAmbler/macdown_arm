@@ -413,6 +413,48 @@
                                     <action selector="toggleFullScreen:" target="-1" id="7ez-RY-PkZ"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="zm0-Sp-001"/>
+                            <menuItem title="Actual Size" keyEquivalent="0" id="zm0-Sp-002">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                                <connections>
+                                    <action selector="resetFontSize:" target="-1" id="zm0-Ac-002"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom In" keyEquivalent="=" id="zm0-Sp-003">
+                                <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                <connections>
+                                    <action selector="makeFontLarger:" target="-1" id="zm0-Ac-003"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Zoom Out" keyEquivalent="-" id="zm0-Sp-004">
+                                <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                <connections>
+                                    <action selector="makeFontSmaller:" target="-1" id="zm0-Ac-004"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="zm0-Sp-005"/>
+                            <menuItem title="Appearance" id="zm0-Sp-006">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Appearance" id="zm0-Mn-006">
+                                    <items>
+                                        <menuItem title="Light" id="zm0-Sp-007">
+                                            <connections>
+                                                <action selector="setLightMode:" target="-1" id="zm0-Ac-007"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Dark" id="zm0-Sp-008">
+                                            <connections>
+                                                <action selector="setDarkMode:" target="-1" id="zm0-Ac-008"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Sepia" id="zm0-Sp-009">
+                                            <connections>
+                                                <action selector="setSepiaMode:" target="-1" id="zm0-Ac-009"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
                         </items>
                     </menu>
                 </menuItem>
