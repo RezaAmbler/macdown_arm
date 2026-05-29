@@ -128,13 +128,21 @@ static CGFloat itemWidth = 37;
     
     NSToolbarItemGroup *selectedGroup = self->toolbarItemIdentifierObjectDictionary[sender.identifier];
     NSToolbarItem *selectedItem = selectedGroup.subitems[selectedIndex];
-    
-    // Invoke the toolbar item's action
-    // Must convert to IMP to let the compiler know about the method definition
+
+    // Invoke the toolbar item's action on the document. We must go through a
+    // proper message send (not a hand-cast IMP) so self/_cmd/sender are all
+    // passed: in a Debug (-O0) ARC build the callee's prologue retains the
+    // sender parameter, and a bare `void (*)(id)` cast leaves that register
+    // uninitialised, crashing in objc_retain.
     MPDocument *document = self.document;
-    IMP imp = [document methodForSelector:selectedItem.action];
-    void (*impFunc)(id) = (void *)imp;
-    impFunc(document);
+    SEL action = selectedItem.action;
+    if ([document respondsToSelector:action])
+    {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+        [document performSelector:action withObject:sender];
+#pragma clang diagnostic pop
+    }
 }
 
 
