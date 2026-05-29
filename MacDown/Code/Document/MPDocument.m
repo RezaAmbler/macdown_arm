@@ -1513,8 +1513,14 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
 }
 
 // Nudges the stored base font size. Its setter writes editorBaseFontInfo,
-// which is KVO-observed and flows through setupEditor: to update the editor
-// font (and the preview zoom, when previewZoomRelativeToBaseFontSize is on).
+// which is KVO-observed and flows through setupEditor: -> scaleWebview to
+// update both the editor font and the preview zoom.
+//
+// scaleWebview only scales the preview when previewZoomRelativeToBaseFontSize
+// is on, so an explicit zoom enables it first — this makes ⌘⌃+/− behave like
+// a browser zoom (both panes) and persists across re-renders, since the
+// preview-load handler re-applies scaleWebview. Set the pref before the font
+// so the resulting scaleWebview already sees it enabled.
 - (void)changeEditorFontSizeBy:(CGFloat)delta
 {
     NSFont *font = [self.preferences.editorBaseFont copy];
@@ -1522,6 +1528,7 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))()
         return;
     CGFloat size = MIN(MAX(font.pointSize + delta, kMPEditorFontPointSizeMin),
                        kMPEditorFontPointSizeMax);
+    self.preferences.previewZoomRelativeToBaseFontSize = YES;
     self.preferences.editorBaseFont = [NSFont fontWithName:font.fontName
                                                       size:size];
 }
