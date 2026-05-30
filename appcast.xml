@@ -6,16 +6,16 @@
     <description>Updates for RezaAmbler's Apple Silicon MacDown fork.</description>
     <language>en</language>
     <item>
-      <title>Version 0.8.0 (arm64)</title>
-      <description><![CDATA[ Native Apple Silicon build with font zoom, Light/Dark/Sepia view modes, and clickable Table of Contents links. ]]></description>
-      <pubDate>Sat, 30 May 2026 00:44:08 +0000</pubDate>
-      <sparkle:version>1119</sparkle:version>
-      <sparkle:shortVersionString>0.8.0</sparkle:shortVersionString>
+      <title>Version 0.8.1 (arm64)</title>
+      <description><![CDATA[ Test update to verify in-app auto-update works (font zoom, view modes, TOC links — same as 0.8.0). ]]></description>
+      <pubDate>Sat, 30 May 2026 00:48:27 +0000</pubDate>
+      <sparkle:version>1120</sparkle:version>
+      <sparkle:shortVersionString>0.8.1</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>10.13</sparkle:minimumSystemVersion>
       <enclosure
-        url="https://github.com/RezaAmbler/macdown_arm/releases/download/v0.8.0/MacDown-arm64.zip"
-        sparkle:edSignature="ic3EXq1nNaAAbop7AX6dohVZFfPjsSVZJBU8M7qmGVTDqHc+x/ME/JTdWB+IpfPy15RO8Sg7fvY/BtCxT1QdAg=="
-        length="7790895"
+        url="https://github.com/RezaAmbler/macdown_arm/releases/download/v0.8.1/MacDown-arm64.zip"
+        sparkle:edSignature="+0I2kY9/vZMFm9NNRn5symz+sLB5jE6MwLz3bLop/M+w8XFrOCqlzDCwEW4ysoGxImRL175J3oxHRvV5RdqXCw=="
+        length="7790893"
         type="application/octet-stream" />
     </item>
   </channel>
