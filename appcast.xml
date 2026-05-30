@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>MacDown (arm64 fork)</title>
+    <link>https://raw.githubusercontent.com/RezaAmbler/macdown_arm/master/appcast.xml</link>
+    <description>Updates for RezaAmbler's Apple Silicon MacDown fork.</description>
+    <language>en</language>
+    <item>
+      <title>Version 0.0.1116 (arm64)</title>
+      <description><![CDATA[
+        <ul>
+          <li>Native Apple Silicon (arm64) build.</li>
+          <li>Font zoom (⌘⌃+/−/0) with editor + preview scaling.</li>
+          <li>Light / Dark / Sepia view modes.</li>
+          <li>Clickable in-document Table of Contents links.</li>
+        </ul>
+      ]]></description>
+      <pubDate>Sat, 30 May 2026 00:35:43 +0000</pubDate>
+      <sparkle:version>1116</sparkle:version>
+      <sparkle:shortVersionString>0.0.1116</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>10.13</sparkle:minimumSystemVersion>
+      <enclosure
+        url="https://github.com/RezaAmbler/macdown_arm/releases/download/v0.0.1116/MacDown-arm64.zip"
+        sparkle:edSignature="qsmyXP2I4R7YRwvJcwnuT4/3LwhdJfyFBmFy/63+GbMeP+8rbNue/c5XOhgB92/BxTf+K0qVYxUKmkwtNqEfCQ=="
+        length="7790906"
+        type="application/octet-stream" />
+    </item>
+  </channel>
+</rss>
