@@ -74,6 +74,7 @@
 		1FEAFEA21DCE762C008C4E8C /* NSUserDefaults+Suite.m in Sources */ = {isa = PBXBuildFile; fileRef = 1F847BC51DCC9DB600A47385 /* NSUserDefaults+Suite.m */; };
 		1FF1420219A8987500CF8A6A /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FF1420119A8987500CF8A6A /* JavaScriptCore.framework */; };
 		1FF1420419A8A24800CF8A6A /* MPUtilityTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FF1420319A8A24800CF8A6A /* MPUtilityTests.m */; };
+		AC10C0DE0000000000000001 /* MPHeadingAnchorTests.m in Sources */ = {isa = PBXBuildFile; fileRef = AC10C0DE0000000000000002 /* MPHeadingAnchorTests.m */; };
 		1FF207631941CF22005B5654 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FF207621941CF22005B5654 /* WebKit.framework */; };
 		1FFEB31919729F7C00B2254F /* MPAssetTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 1FFEB31819729F7C00B2254F /* MPAssetTests.m */; };
 		1FFEB31D19729FEF00B2254F /* test.css in Resources */ = {isa = PBXBuildFile; fileRef = 1FFEB31C19729FEF00B2254F /* test.css */; };
@@ -474,6 +475,7 @@
 		1FCE066319633D6B00DC83B4 /* Data */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Data; path = Resources/Data; sourceTree = "<group>"; };
 		1FF1420119A8987500CF8A6A /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk/System/Library/Frameworks/JavaScriptCore.framework; sourceTree = DEVELOPER_DIR; };
 		1FF1420319A8A24800CF8A6A /* MPUtilityTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPUtilityTests.m; sourceTree = "<group>"; };
+		AC10C0DE0000000000000002 /* MPHeadingAnchorTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPHeadingAnchorTests.m; sourceTree = "<group>"; };
 		1FF207621941CF22005B5654 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 		1FFEB31819729F7C00B2254F /* MPAssetTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPAssetTests.m; sourceTree = "<group>"; };
 		1FFEB31A19729FD500B2254F /* test.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = test.js; sourceTree = "<group>"; };
@@ -842,6 +844,7 @@
 			isa = PBXGroup;
 			children = (
 				1FF1420319A8A24800CF8A6A /* MPUtilityTests.m */,
+				AC10C0DE0000000000000002 /* MPHeadingAnchorTests.m */,
 				1F25E1C21A50F4F10029371D /* MPColorTests.m */,
 				1FCDCA311944F96E00B1F966 /* MPPreferencesTests.m */,
 				1FFF301C1948A5320009AF24 /* MPStringLookupTests.m */,
@@ -1269,6 +1272,7 @@
 				1FFEB31919729F7C00B2254F /* MPAssetTests.m in Sources */,
 				1F51C9A5194565050015A96F /* MPPreferencesTests.m in Sources */,
 				1FF1420419A8A24800CF8A6A /* MPUtilityTests.m in Sources */,
+				AC10C0DE0000000000000001 /* MPHeadingAnchorTests.m in Sources */,
 				1FFEB3271972DAB400B2254F /* MPHTMLTabularizeTests.m in Sources */,
 				1F25E1C31A50F4F10029371D /* MPColorTests.m in Sources */,
 				1FFF301D1948A5320009AF24 /* MPStringLookupTests.m in Sources */,

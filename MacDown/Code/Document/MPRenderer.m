@@ -138,9 +138,13 @@ NS_INLINE NSString *MPHTMLFromMarkdown(
         hoedown_document_free(document);
         hoedown_buffer_free(ob);
     }
+
+    // Give headings GitHub-style id anchors so in-document TOC links resolve.
+    result = [MPRenderer HTMLByAddingHeadingAnchors:result];
+
     if (frontMatter)
         result = [NSString stringWithFormat:@"%@\n%@", frontMatter, result];
-    
+
     return result;
 }
 
@@ -699,6 +703,107 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     NSString *html = MPGetHTML(
         title, self.currentHtml, styles, stylesOption, scripts, scriptsOption);
     return html;
+}
+
+#pragma mark - Heading anchors
+
++ (NSString *)anchorSlugForHeadingText:(NSString *)text
+{
+    // GitHub-compatible slug: lowercase, keep letters/digits/'-'/'_', turn
+    // spaces into hyphens, drop everything else. e.g.
+    //   "1. Product Overview"            -> "1-product-overview"
+    //   "6. Authentication & Authorization" -> "6-authentication--authorization"
+    NSString *lower = [text lowercaseString];
+    NSCharacterSet *alnum = [NSCharacterSet alphanumericCharacterSet];
+    NSMutableString *slug = [NSMutableString stringWithCapacity:lower.length];
+    [lower enumerateSubstringsInRange:NSMakeRange(0, lower.length)
+                              options:NSStringEnumerationByComposedCharacterSequences
+                           usingBlock:^(NSString *ch, NSRange r, NSRange er, BOOL *stop) {
+        unichar first = [ch characterAtIndex:0];
+        if ([ch rangeOfCharacterFromSet:alnum].location != NSNotFound
+                || first == '-' || first == '_')
+            [slug appendString:ch];
+        else if (first == ' ')
+            [slug appendString:@"-"];
+        // anything else (punctuation) is dropped
+    }];
+    return [slug copy];
+}
+
+// Strips inline tags and decodes the handful of entities hoedown emits, so a
+// heading's text matches what the user sees (and what GitHub would slug).
++ (NSString *)plainTextFromHeadingHTML:(NSString *)html
+{
+    static NSRegularExpression *tagRegex = nil;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        tagRegex = [[NSRegularExpression alloc] initWithPattern:@"<[^>]+>"
+                                                        options:0 error:NULL];
+    });
+    NSString *text = [tagRegex stringByReplacingMatchesInString:html options:0
+                            range:NSMakeRange(0, html.length) withTemplate:@""];
+    text = [text stringByReplacingOccurrencesOfString:@"&lt;" withString:@"<"];
+    text = [text stringByReplacingOccurrencesOfString:@"&gt;" withString:@">"];
+    text = [text stringByReplacingOccurrencesOfString:@"&quot;" withString:@"\""];
+    text = [text stringByReplacingOccurrencesOfString:@"&#39;" withString:@"'"];
+    text = [text stringByReplacingOccurrencesOfString:@"&apos;" withString:@"'"];
+    // &amp; last so "&amp;lt;" doesn't become "<".
+    text = [text stringByReplacingOccurrencesOfString:@"&amp;" withString:@"&"];
+    return text;
+}
+
++ (NSString *)HTMLByAddingHeadingAnchors:(NSString *)html
+{
+    if (!html.length)
+        return html;
+
+    static NSRegularExpression *headingRegex = nil;
+    static dispatch_once_t token;
+    dispatch_once(&token, ^{
+        // <hN ...attrs...>inner</hN>, attrs and inner captured.
+        NSRegularExpressionOptions ops = NSRegularExpressionCaseInsensitive
+            | NSRegularExpressionDotMatchesLineSeparators;
+        headingRegex = [[NSRegularExpression alloc]
+            initWithPattern:@"<h([1-6])([^>]*)>(.*?)</h\\1>" options:ops error:NULL];
+    });
+
+    NSArray<NSTextCheckingResult *> *matches =
+        [headingRegex matchesInString:html options:0
+                                range:NSMakeRange(0, html.length)];
+    if (!matches.count)
+        return html;
+
+    // First pass (document order): compute slugs, de-duplicating repeats.
+    // hoedown already gives headings an id="toc_N" (used by the [TOC] feature),
+    // so rather than touch that we insert an empty anchor at the start of the
+    // heading's content to carry the slug — additive and non-breaking.
+    NSCountedSet *seen = [NSCountedSet set];
+    NSMutableArray<NSNumber *> *locations = [NSMutableArray array];
+    NSMutableArray<NSString *> *anchors = [NSMutableArray array];
+    for (NSTextCheckingResult *match in matches)
+    {
+        NSString *inner = [html substringWithRange:[match rangeAtIndex:3]];
+        NSString *base =
+            [self anchorSlugForHeadingText:[self plainTextFromHeadingHTML:inner]];
+        if (!base.length)
+            continue;
+
+        NSUInteger n = [seen countForObject:base];
+        [seen addObject:base];
+        NSString *slug = n ? [NSString stringWithFormat:@"%@-%lu",
+                              base, (unsigned long)n] : base;
+
+        [locations addObject:@([match rangeAtIndex:3].location)];
+        [anchors addObject:[NSString stringWithFormat:
+            @"<a class=\"md-heading-anchor\" id=\"%@\"></a>", slug]];
+    }
+
+    // Second pass (reverse): insert from the end so earlier offsets stay valid.
+    NSMutableString *out = [html mutableCopy];
+    for (NSInteger i = locations.count - 1; i >= 0; i--)
+        [out insertString:anchors[i]
+                  atIndex:locations[i].unsignedIntegerValue];
+    return [out copy];
 }
 
 @end

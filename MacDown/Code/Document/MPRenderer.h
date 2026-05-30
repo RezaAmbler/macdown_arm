@@ -35,6 +35,13 @@ typedef NS_ENUM(NSUInteger, MPCodeBlockAccessoryType)
 - (NSString *)HTMLForExportWithStyles:(BOOL)withStyles
                          highlighting:(BOOL)withHighlighting;
 
+// Heading anchors. anchorSlugForHeadingText: produces a GitHub-compatible
+// slug so that hand-written TOC links like [Foo](#foo) resolve.
+// HTMLByAddingHeadingAnchors: injects id="slug" into <h1>..<h6> tags
+// (de-duplicating repeats with -1/-2 suffixes). Exposed for unit testing.
++ (NSString *)anchorSlugForHeadingText:(NSString *)text;
++ (NSString *)HTMLByAddingHeadingAnchors:(NSString *)html;
+
 @end
 
 
