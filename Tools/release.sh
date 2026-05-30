@@ -35,8 +35,16 @@ xcodebuild -workspace MacDown.xcworkspace -scheme MacDown \
     || { echo "BUILD FAILED — see /tmp/macdown_release_build.log"; exit 1; }
 
 APP="$(ls -d "$HOME"/Library/Developer/Xcode/DerivedData/MacDown-*/Build/Products/Release/MacDown.app | head -1)"
-SHORT="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
-BUNDLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist")"
+
+# Xcode's version run-script phase doesn't reliably re-run on incremental
+# builds, so derive the version from git (the same logic the project uses in
+# Tools/utils.sh) and stamp it into the built bundle ourselves, before signing.
+# shellcheck source=utils.sh
+source "$ROOT/Tools/utils.sh"
+SHORT="$(get_short_version)"
+BUNDLE="$(get_bundle_version)"
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $SHORT" "$APP/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUNDLE" "$APP/Contents/Info.plist"
 echo "    built version $SHORT (build $BUNDLE) — $(lipo -info "$APP/Contents/MacOS/MacDown" | sed 's/.*: //')"
 
 echo "==> Ad-hoc signing and zipping"
