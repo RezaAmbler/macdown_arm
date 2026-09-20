@@ -572,14 +572,32 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
         // Parse in backgound
         [self parseMarkdown:markdown];
         
-        // Wait untils is renderer has finished loading OR until the maxDelay has passed
-        // This should result in overall faster update times
+        // Wait until the preview has finished loading, or until maxDelay has
+        // passed. This results in overall faster update times.
+        //
+        // The timeout used to be written as `[start timeIntervalSinceNow] >=
+        // maxDelay`, combined with ||. timeIntervalSinceNow counts backwards
+        // from a date in the past, so that term was negative and maxDelay
+        // positive: it was never true, and the condition collapsed to "loop
+        // while loading", with no timeout and nothing yielding the CPU.
+        //
+        // That was merely wasteful with the old WebView. With WKWebView the
+        // page is rendered by a separate process that can stall or be
+        // jettisoned, leaving isLoading stuck at YES -- and this is a
+        // background thread spinning dispatch_sync against the main queue,
+        // so it would peg a core indefinitely.
+        //
+        // Waiting is only an optimisation in any case: a render that arrives
+        // mid-load is held by alreadyRenderingInWeb and replayed when the
+        // navigation finishes.
         NSDate *start = [NSDate date];
-        __block BOOL rendererIsLoading = true;
-        while (rendererIsLoading || [start timeIntervalSinceNow] >= maxDelay) {
+        __block BOOL rendererIsLoading = YES;
+        while (rendererIsLoading && -[start timeIntervalSinceNow] < maxDelay) {
             dispatch_sync(dispatch_get_main_queue(), ^{
                 rendererIsLoading = [self.dataSource rendererLoading];
             });
+            if (rendererIsLoading)
+                usleep(5000);
         }
         
         // Render on main thread
