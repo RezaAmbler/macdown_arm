@@ -50,6 +50,7 @@ The following editor themes and CSS files are extracted from [Mou](http://mouapp
 If you wish to build MacDown yourself, you will need the following components/tools:
 
 * Xcode 27 or later (tested on Xcode 27.0 / macOS 27)
+* A Mac running macOS 14.0 or later (this fork is Apple Silicon only)
 * Git
 * CocoaPods 1.17 or later
 

@@ -30,7 +30,7 @@ export DEVELOPER_DIR="$DEVELOPER_DIR_PATH"
 export LANG=en_US.UTF-8
 xcodebuild -workspace MacDown.xcworkspace -scheme MacDown \
     -configuration Release -arch arm64 ONLY_ACTIVE_ARCH=YES \
-    MACOSX_DEPLOYMENT_TARGET=12.0 CODE_SIGN_IDENTITY="-" \
+    MACOSX_DEPLOYMENT_TARGET=14.0 CODE_SIGN_IDENTITY="-" \
     CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES build >/tmp/macdown_release_build.log 2>&1 \
     || { echo "BUILD FAILED — see /tmp/macdown_release_build.log"; exit 1; }
 
@@ -84,7 +84,7 @@ cat > appcast.xml <<XML
       <pubDate>$PUBDATE</pubDate>
       <sparkle:version>$BUNDLE</sparkle:version>
       <sparkle:shortVersionString>$SHORT</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>12.0</sparkle:minimumSystemVersion>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <enclosure
         url="$URL"
         sparkle:edSignature="$EDSIG"
