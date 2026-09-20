@@ -19,6 +19,7 @@
 #import "NSPasteboard+Types.h"
 #import "NSString+Lookup.h"
 #import "NSTextView+Autocomplete.h"
+#import "NSString+WordCount.h"
 #import "MPPreferences.h"
 #import "MPDocumentSplitView.h"
 #import "MPEditorView.h"
@@ -77,6 +78,45 @@ static NSString * const kMPPreviewBridgeScript = @""
     "    s.scrollBehavior = 'auto';"
     "    window.scrollTo(0, y);"
     "    s.scrollBehavior = prev;"
+    "  },"
+    // Gather the text the word/character counters run over, mirroring what
+    // the old DOMNode+Text walk did: script, style and head are skipped; a
+    // code block (PRE > CODE) contributes no words; an inline CODE with any
+    // content counts as exactly one word.
+    //
+    // Two strings come back because the rules differ. Words are joined with
+    // spaces, which reproduces summing each text node's count separately --
+    // concatenating would fuse words across element boundaries. Characters
+    // are concatenated raw, since the old code summed raw lengths.
+    "  textForCount: function () {"
+    "    var words = [], chars = [];"
+    "    (function walk(node, inCodeBlock) {"
+    "      for (var n = node.firstChild; n; n = n.nextSibling) {"
+    "        if (n.nodeType === 1) {"
+    "          var tag = n.tagName ? n.tagName.toUpperCase() : '';"
+    "          if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'HEAD')"
+    "            continue;"
+    "          if (tag === 'CODE') {"
+    "            var parent = n.parentNode;"
+    "            var parentTag = (parent && parent.tagName)"
+    "                            ? parent.tagName.toUpperCase() : '';"
+    "            if (parentTag === 'PRE') {"
+    "              walk(n, true);"
+    "              continue;"
+    "            }"
+    "            if (n.textContent && n.textContent.length) words.push('x');"
+    "            walk(n, true);"
+    "            continue;"
+    "          }"
+    "          walk(n, inCodeBlock);"
+    "        } else if (n.nodeType === 3 || n.nodeType === 4) {"
+    "          var v = n.nodeValue || '';"
+    "          chars.push(v);"
+    "          if (!inCodeBlock) words.push(v);"
+    "        }"
+    "      }"
+    "    })(document, false);"
+    "    return { words: words.join(' '), chars: chars.join('') };"
     "  }"
     "};"
     // Report the preview's scroll position, coalesced to one message per
@@ -2258,9 +2298,32 @@ static void (^MPGetPreviewLoadingCompletionHandler(MPDocument *doc))(void)
 
 - (void)updateWordCount
 {
-    // TODO: reimplement over the JS bridge (the old DOMDocument.textCount
-    // walk has no WKWebView equivalent). Stubbed so the rest of the
-    // migration can be verified first.
+    __weak MPDocument *weakSelf = self;
+    [self.preview evaluateJavaScript:@"window.__mp && window.__mp.textForCount()"
+                   completionHandler:^(id result, NSError *error) {
+        MPDocument *self_ = weakSelf;
+        if (!self_ || ![result isKindOfClass:[NSDictionary class]])
+            return;
+
+        NSString *words = result[@"words"];
+        NSString *chars = result[@"chars"];
+        if (![words isKindOfClass:[NSString class]]
+            || ![chars isKindOfClass:[NSString class]])
+            return;
+
+        self_.totalWords = words.numberOfWords;
+        self_.totalCharacters = chars.lengthWithoutNewlines;
+        self_.totalCharactersNoSpaces = chars.lengthWithoutWhitespacesAndNewlines;
+#ifdef MP_DEBUG_WORD_COUNT
+        NSLog(@"[wc] words=%lu chars=%lu charsNoSpaces=%lu",
+              (unsigned long)self_.totalWords,
+              (unsigned long)self_.totalCharacters,
+              (unsigned long)self_.totalCharactersNoSpaces);
+#endif
+
+        if (self_.isPreviewReady)
+            self_.wordCountWidget.enabled = YES;
+    }];
 }
 
 - (BOOL)isCurrentBaseUrl:(NSURL *)another
