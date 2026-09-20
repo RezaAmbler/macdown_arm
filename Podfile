@@ -1,4 +1,4 @@
-platform :osx, "10.13"
+platform :osx, "12.0"
 
 source 'https://github.com/MacDownApp/cocoapods-specs.git'  # Patched libraries.
 source 'https://cdn.cocoapods.org/'

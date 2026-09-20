@@ -177,6 +177,8 @@ Build/
 Pods/
 Tools/__pycache__/
 Dependency/version/version.h
+# Xcode dumps a per-toolchain plug-in cache (e.g. 27.0-27A266a/) here
+Dependency/version/[0-9]*/
 Dependency/peg-markdown-highlight/pmh_parser_core.c
 Dependency/peg-markdown-highlight/pmh_parser.c
 Dependency/peg-markdown-highlight/*.o

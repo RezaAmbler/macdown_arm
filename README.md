@@ -49,27 +49,33 @@ The following editor themes and CSS files are extracted from [Mou](http://mouapp
 
 If you wish to build MacDown yourself, you will need the following components/tools:
 
-* OS X SDK (10.14 or later)
+* Xcode 27 or later (tested on Xcode 27.0 / macOS 27)
 * Git
-* [Bundler](http://bundler.io)
+* CocoaPods 1.17 or later
 
-> Note: Old versions of CocoaPods are not supported. Please use Bundler to execute CocoaPods, or make sure your CocoaPods is later than shown in `Gemfile.lock`.
+Install CocoaPods with Homebrew:
 
-> Note: The Command Line Tools (CLT) should be unnecessary. If you failed to compile without it, please install CLT with
+    brew install cocoapods
+
+> Note: do **not** use the system Ruby with Bundler to run CocoaPods. macOS 27's
+> bundled Ruby 2.6 can no longer compile the native extensions the older
+> CocoaPods releases depend on. The Homebrew formula ships its own Ruby and is
+> the supported path.
+
+> Note: the Command Line Tools (CLT) should be unnecessary, and an out-of-date
+> CLT can actively break the build — its SDK may shadow Xcode's. If a
+> dependency's `./configure` step fails to link, point the build at Xcode's SDK
+> explicitly:
 >
->     xcode-select --install
->
-> and report back.
-
-An appropriate SDK should be bundled with Xcode 5 or later versions.
+>     export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+>     export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
 
 ### Environment Setup
 
 After cloning the repository, run the following commands inside the repository root (directory containing this `README.md` file):
 
     git submodule update --init
-    bundle install
-    bundle exec pod install
+    pod install
     make -C Dependency/peg-markdown-highlight
 
 and open `MacDown.xcworkspace` in Xcode. The first command initialises the dependency submodule(s) used in MacDown; the second one installs dependencies managed by CocoaPods.
@@ -77,7 +83,17 @@ and open `MacDown.xcworkspace` in Xcode. The first command initialises the depen
 Refer to the official guides of Git and CocoaPods if you need more instructions. If you run into build issues later on, try running the following commands to update dependencies:
 
     git submodule update
-    bundle exec pod install
+    pod install
+
+### Regenerating the GitHub-2020 style
+
+`MacDown/Resources/Styles/GitHub-2020.css` is generated from `index.sass` but is
+committed to the repository, so a normal build needs no Node toolchain. To
+regenerate it after changing the source:
+
+    cd Tools/GitHub-style-generator
+    npm install
+    make
 
 ### Translation
 
