@@ -19,13 +19,20 @@
 #import "MPAsset.h"
 #import "MPPreferences.h"
 
-// Warning: If the version of MathJax is ever updated, please check the status
-// of https://github.com/mathjax/MathJax/issues/548. If the fix has been merged
-// in to MathJax, then the WebResourceLoadDelegate can be removed from MPDocument
-// and MathJax.js can be removed from this project.
-static NSString * const kMPMathJaxCDN =
-    @"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js"
-    @"?config=TeX-AMS-MML_HTMLorMML";
+// MacDown ships a patched copy of the MathJax 2.7.3 loader (Resources/MathJax)
+// that does not hang when a resource fails to load -- see
+// https://github.com/mathjax/MathJax/issues/548.
+//
+// The legacy WebView substituted that patched loader for the CDN one by
+// rewriting the request in a WebResourceLoadDelegate. WKWebView cannot
+// intercept https loads, so instead the patched loader is inlined directly
+// into the page and pointed at the CDN for everything else it needs (config,
+// jax, fonts) via MathJax.AuthorConfig.root, which the loader honours.
+//
+// MathJax therefore still requires a network connection, exactly as before.
+static NSString * const kMPMathJaxCDNRoot =
+    @"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3";
+static NSString * const kMPMathJaxConfigName = @"TeX-AMS-MML_HTMLorMML.js";
 static NSString * const kMPPrismScriptDirectory = @"Prism/components";
 static NSString * const kMPPrismThemeDirectory = @"Prism/themes";
 static NSString * const kMPPrismPluginDirectory = @"Prism/plugins";
@@ -426,15 +433,32 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
 - (NSArray *)mathjaxScripts
 {
     NSMutableArray *scripts = [NSMutableArray array];
-    NSURL *url = [NSURL URLWithString:kMPMathJaxCDN];
     NSBundle *bundle = [NSBundle mainBundle];
-    MPEmbeddedScript *script =
+
+    // 1. Tell the loader where to fetch everything else from, and which
+    //    config to use. This replaces the "?config=" query string the CDN
+    //    URL used to carry, and must run before the loader itself.
+    NSString *authorConfig =
+        [NSString stringWithFormat:
+            @"window.MathJax = { root: \"%@\", config: [\"%@\"] };",
+            kMPMathJaxCDNRoot, kMPMathJaxConfigName];
+    [scripts addObject:[MPInlineScript scriptWithContent:authorConfig]];
+
+    // 2. MacDown's own MathJax configuration, picked up by the loader.
+    [scripts addObject:
         [MPEmbeddedScript assetWithURL:[bundle URLForResource:@"init"
                                                 withExtension:@"js"
                                                  subdirectory:@"MathJax"]
-                               andType:kMPMathJaxConfigType];
-    [scripts addObject:script];
-    [scripts addObject:[MPScript javaScriptWithURL:url]];
+                               andType:kMPMathJaxConfigType]];
+
+    // 3. The patched loader, inlined. Embedding rather than linking is what
+    //    lets us keep using the patched copy now that requests can no longer
+    //    be rewritten; it also means exported HTML carries the same fix.
+    [scripts addObject:
+        [MPEmbeddedScript assetWithURL:[bundle URLForResource:@"MathJax"
+                                                withExtension:@"js"
+                                                 subdirectory:@"MathJax"]
+                               andType:kMPJavaScriptType]];
     return scripts;
 }
 

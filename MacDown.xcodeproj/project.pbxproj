@@ -88,6 +88,9 @@
 		770BB49E962A302D0715A6A5 /* libPods-MacDown.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 42F926DD38559C7CEDB6E42F /* libPods-MacDown.a */; };
 		852D523C1E260A6400BA7162 /* MPTerminalPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 852D523A1E260A6400BA7162 /* MPTerminalPreferencesViewController.m */; };
 		85E24E5C1E5019C00056E696 /* MPToolbarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 85E24E5B1E5019C00056E696 /* MPToolbarController.m */; };
+		AA01FE0003000000000000A3 /* MPPreviewWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = AA01FE0002000000000000A2 /* MPPreviewWebView.m */; };
+		AA01FE0009000000000000A9 /* MPPreviewSchemeHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = AA01FE0008000000000000A8 /* MPPreviewSchemeHandler.m */; };
+		AA01FE0006000000000000A6 /* MPWeakScriptMessageHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = AA01FE0005000000000000A5 /* MPWeakScriptMessageHandler.m */; };
 		905EF1A9196164CA00FC3CE9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 905EF1A8196164CA00FC3CE9 /* Foundation.framework */; };
 		905EF1B7196164F300FC3CE9 /* macdown in Copy Command Line Utility */ = {isa = PBXBuildFile; fileRef = 905EF1A7196164CA00FC3CE9 /* macdown */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		B5C5C1666A506FEA86435D25 /* libPods-macdown-cmd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 263367245B2D78A42C2F19D7 /* libPods-macdown-cmd.a */; };
@@ -499,6 +502,12 @@
 		852D523A1E260A6400BA7162 /* MPTerminalPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPTerminalPreferencesViewController.m; sourceTree = "<group>"; };
 		85E24E5A1E5019C00056E696 /* MPToolbarController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MPToolbarController.h; path = Code/Application/MPToolbarController.h; sourceTree = "<group>"; };
 		85E24E5B1E5019C00056E696 /* MPToolbarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MPToolbarController.m; path = Code/Application/MPToolbarController.m; sourceTree = "<group>"; };
+		AA01FE0001000000000000A1 /* MPPreviewWebView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPPreviewWebView.h; sourceTree = "<group>"; };
+		AA01FE0002000000000000A2 /* MPPreviewWebView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPPreviewWebView.m; sourceTree = "<group>"; };
+		AA01FE0007000000000000A7 /* MPPreviewSchemeHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPPreviewSchemeHandler.h; sourceTree = "<group>"; };
+		AA01FE0008000000000000A8 /* MPPreviewSchemeHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPPreviewSchemeHandler.m; sourceTree = "<group>"; };
+		AA01FE0004000000000000A4 /* MPWeakScriptMessageHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MPWeakScriptMessageHandler.h; sourceTree = "<group>"; };
+		AA01FE0005000000000000A5 /* MPWeakScriptMessageHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MPWeakScriptMessageHandler.m; sourceTree = "<group>"; };
 		8CDC5EA0050D2F722FB1AADD /* Pods-MacDownTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MacDownTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-MacDownTests/Pods-MacDownTests.debug.xcconfig"; sourceTree = "<group>"; };
 		905EF1A7196164CA00FC3CE9 /* macdown */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = macdown; sourceTree = BUILT_PRODUCTS_DIR; };
 		905EF1A8196164CA00FC3CE9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -605,6 +614,8 @@
 				1F5A370F1C868EC0006E63E7 /* MPPlugIn.m */,
 				1F0D9D63194AC7CF008E1856 /* MPUtilities.h */,
 				1F0D9D64194AC7CF008E1856 /* MPUtilities.m */,
+				AA01FE0004000000000000A4 /* MPWeakScriptMessageHandler.h */,
+				AA01FE0005000000000000A5 /* MPWeakScriptMessageHandler.m */,
 			);
 			name = Utility;
 			path = Code/Utility;
@@ -642,6 +653,8 @@
 			children = (
 				1F64CCC7195F5AB900CE619A /* MPAsset.h */,
 				1F64CCC8195F5AB900CE619A /* MPAsset.m */,
+				AA01FE0007000000000000A7 /* MPPreviewSchemeHandler.h */,
+				AA01FE0008000000000000A8 /* MPPreviewSchemeHandler.m */,
 				1F002A21195B3DAE008B8D93 /* MPRenderer.h */,
 				1F002A22195B3DAE008B8D93 /* MPRenderer.m */,
 				1F0D9D91194AC852008E1856 /* MPDocument.h */,
@@ -659,6 +672,8 @@
 				1F33F2A01A3B4B660001C849 /* MPDocumentSplitView.m */,
 				1F396E6419B0EA17000D3EFC /* MPEditorView.h */,
 				1F396E6519B0EA17000D3EFC /* MPEditorView.m */,
+				AA01FE0001000000000000A1 /* MPPreviewWebView.h */,
+				AA01FE0002000000000000A2 /* MPPreviewWebView.m */,
 			);
 			name = View;
 			path = Code/View;
@@ -1233,6 +1248,9 @@
 				1FFEB3251972D88900B2254F /* NSObject+HTMLTabularize.m in Sources */,
 				1F9A14EC194EEE9900D1C6A9 /* MPExportPanelAccessoryViewController.m in Sources */,
 				85E24E5C1E5019C00056E696 /* MPToolbarController.m in Sources */,
+				AA01FE0003000000000000A3 /* MPPreviewWebView.m in Sources */,
+				AA01FE0009000000000000A9 /* MPPreviewSchemeHandler.m in Sources */,
+				AA01FE0006000000000000A6 /* MPWeakScriptMessageHandler.m in Sources */,
 				1F5A37101C868EC0006E63E7 /* MPPlugIn.m in Sources */,
 				1FBDFEA11962A25A00BEEA70 /* MPGeneralPreferencesViewController.m in Sources */,
 				1F9A14ED194EEE9900D1C6A9 /* MPMainController.m in Sources */,

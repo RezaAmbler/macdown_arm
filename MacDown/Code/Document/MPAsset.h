@@ -40,3 +40,15 @@ extern NSString * const kMPMathJaxConfigType;
 
 @interface MPEmbeddedScript : MPScript
 @end
+
+
+/**
+ * A script whose body is supplied directly rather than read from a file.
+ *
+ * Used for the MathJax AuthorConfig block, which has to be emitted as real
+ * JavaScript before the loader runs and is built from a constant rather than
+ * shipped as a resource.
+ */
+@interface MPInlineScript : MPScript
++ (instancetype)scriptWithContent:(NSString *)content;
+@end

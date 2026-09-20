@@ -237,3 +237,31 @@ static NSString *MPCachedFileContents(NSString *path)
 }
 
 @end
+
+
+@implementation MPInlineScript
+{
+    NSString *_content;
+}
+
++ (instancetype)scriptWithContent:(NSString *)content
+{
+    MPInlineScript *script = [[self alloc] initWithURL:nil
+                                              andType:kMPJavaScriptType];
+    if (script)
+        script->_content = [content copy];
+    return script;
+}
+
+- (NSString *)htmlForOption:(MPAssetOption)option
+{
+    if (option == MPAssetNone || !_content.length)
+        return nil;
+
+    // Always inlined, whichever option is asked for: there is no file to
+    // link to.
+    return [NSString stringWithFormat:@"<script type=\"%@\">\n%@\n</script>",
+                                      kMPJavaScriptType, _content];
+}
+
+@end
