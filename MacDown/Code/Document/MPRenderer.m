@@ -648,9 +648,16 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     id<MPRendererDelegate> delegate = self.delegate;
 
     NSString *title = [self.dataSource rendererHTMLTitle:self];
+
+    // Assets are inlined rather than linked. WKWebView will not load local
+    // file subresources for every configuration we care about, and inlining
+    // sidesteps the question entirely. MathJax is a remote CDN URL, so it
+    // keeps falling through to a <script src> -- see -mathjaxScripts.
+    // MPAsset caches file contents, so this does not re-read from disk on
+    // every keystroke.
     NSString *html = MPGetHTML(
-        title, self.currentHtml, self.stylesheets, MPAssetFullLink,
-        self.scripts, MPAssetFullLink);
+        title, self.currentHtml, self.stylesheets, MPAssetEmbedded,
+        self.scripts, MPAssetEmbedded);
     [delegate renderer:self didProduceHTMLOutput:html];
 
     self.styleName = [delegate rendererStyleName:self];
