@@ -27,3 +27,16 @@ end
 target "macdown-cmd" do
   pod 'GBCli', '~> 1.1'
 end
+
+# Several of these pods still declare 10.6-10.8 deployment targets in their
+# podspecs, which Xcode 27 rejects outright (its floor is 12.0). The Podfile
+# `platform` line only sets a default, so force every generated pod target up
+# to match the app. Without this a plain Xcode build fails; it used to be
+# masked by release.sh passing MACOSX_DEPLOYMENT_TARGET on the command line.
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '12.0'
+    end
+  end
+end
