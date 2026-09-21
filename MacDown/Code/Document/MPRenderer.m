@@ -506,6 +506,70 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     return scripts;
 }
 
+/** Whether the current document actually contains a mermaid diagram.
+ *
+ * -currentLanguages holds the info string of every fenced code block in the
+ * document, so this is simply whether one of them is a mermaid block --
+ * which is exactly what mermaid.init.js goes looking for
+ * (".language-mermaid").
+ */
+- (BOOL)currentDocumentUsesMermaid
+{
+    return [self.currentLanguages containsObject:@"mermaid"];
+}
+
+/** Whether the current document actually contains a Graphviz diagram.
+ *
+ * viz.init.js scans for "code.language-<engine>" for each supported engine,
+ * so a document uses Graphviz if it fences a block with any of those names.
+ */
+- (BOOL)currentDocumentUsesGraphviz
+{
+    static NSSet *engines = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        engines = [NSSet setWithArray:@[@"circo", @"dot", @"fdp",
+                                        @"neato", @"osage", @"twopi"]];
+    });
+
+    for (NSString *language in self.currentLanguages)
+    {
+        if ([engines containsObject:language])
+            return YES;
+    }
+    return NO;
+}
+
+/** Whether the current document appears to contain any mathematics.
+ *
+ * MathJax fetches its configuration, jax and fonts from a CDN as soon as it
+ * loads, so including it in a document with no formulas costs a network
+ * round trip for nothing. Checking first keeps that to documents that need
+ * it.
+ *
+ * Deliberately generous: these are the only delimiters MathJax is configured
+ * for, and erring towards including it merely wastes a request, whereas
+ * leaving it out of a document that needs it would fail to typeset.
+ */
+- (BOOL)currentDocumentUsesMathJax
+{
+    NSString *html = self.currentHtml;
+    if (!html.length)
+        return NO;
+
+    if ([html rangeOfString:@"$$"].location != NSNotFound
+        || [html rangeOfString:@"\\("].location != NSNotFound
+        || [html rangeOfString:@"\\["].location != NSNotFound)
+        return YES;
+
+    // With inline-dollar enabled a single "$" pair also delimits math.
+    if ([MPPreferences sharedInstance].htmlMathJaxInlineDollar
+        && [html rangeOfString:@"$"].location != NSNotFound)
+        return YES;
+
+    return NO;
+}
+
 - (NSArray *)stylesheets
 {
     id<MPRendererDelegate> delegate = self.delegate;
@@ -515,11 +579,11 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     {
         [stylesheets addObjectsFromArray:self.prismStylesheets];
         // mermaid
-        if ([delegate rendererHasMermaid:self])
+        if ([delegate rendererHasMermaid:self] && self.currentDocumentUsesMermaid)
         {
             [stylesheets addObjectsFromArray:self.mermaidStylesheets];
         }
-        
+
     }
 
     if ([delegate rendererCodeBlockAccesory:self] == MPCodeBlockAccessoryCustom)
@@ -542,13 +606,18 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     if ([d rendererHasSyntaxHighlighting:self])
     {
         [scripts addObjectsFromArray:self.prismScripts];
-        // mermaid
-        if ([d rendererHasMermaid:self])
+
+        // These two are only pulled in when the document actually contains a
+        // diagram. mermaid.min.js is 1.1 MB and viz.js is 3.6 MB, and assets
+        // are inlined into the page rather than linked, so including them
+        // unconditionally would put nearly 5 MB into every render -- which
+        // happens roughly twice a second while typing. Gating on content is
+        // what makes it reasonable for these to be on by default.
+        if ([d rendererHasMermaid:self] && self.currentDocumentUsesMermaid)
         {
             [scripts addObjectsFromArray:self.mermaidScripts];
         }
-        // graphviz
-        if ([d rendererHasGraphviz:self])
+        if ([d rendererHasGraphviz:self] && self.currentDocumentUsesGraphviz)
         {
             [scripts addObjectsFromArray:self.graphvizScripts];
         }
