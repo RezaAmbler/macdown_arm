@@ -17,7 +17,7 @@
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customView id="Hz6-mo-xeY">
-            <rect key="frame" x="0.0" y="0.0" width="405" height="367"/>
+            <rect key="frame" x="0.0" y="0.0" width="405" height="393"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0ez-nk-c3q">
@@ -114,8 +114,8 @@
                         <binding destination="-2" name="enabled" keyPath="self.preferences.htmlSyntaxHighlighting" id="zSJ-H9-kjZ"/>
                     </connections>
                 </button>
-                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Qe1-sK-Yxe">
-                    <rect key="frame" x="247" y="221" width="69" height="18"/>
+                <button translatesAutoresizingMaskIntoConstraints="NO" id="Qe1-sK-Yxe">
+                    <rect key="frame" x="127" y="197" width="69" height="18"/>
                     <buttonCell key="cell" type="check" title="Graphviz" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="Lnj-HG-QHi">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="smallSystem"/>
@@ -125,8 +125,8 @@
                         <binding destination="-2" name="value" keyPath="self.preferences.htmlGraphviz" id="28T-6A-JOn"/>
                     </connections>
                 </button>
-                <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bWg-uC-6W8">
-                    <rect key="frame" x="318" y="221" width="68" height="18"/>
+                <button translatesAutoresizingMaskIntoConstraints="NO" id="bWg-uC-6W8">
+                    <rect key="frame" x="208" y="197" width="68" height="18"/>
                     <buttonCell key="cell" type="check" title="Mermaid" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="bda-Ft-ecb">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                         <font key="font" metaFont="smallSystem"/>
@@ -249,7 +249,11 @@
                 <constraint firstItem="ysT-Br-eSf" firstAttribute="trailing" secondItem="Zna-RM-nBO" secondAttribute="trailing" id="2Dv-QD-tU1"/>
                 <constraint firstItem="vVI-g8-EhH" firstAttribute="trailing" secondItem="Dd4-T9-cLi" secondAttribute="trailing" id="3CP-t8-TSZ"/>
                 <constraint firstItem="vVI-g8-EhH" firstAttribute="leading" secondItem="Zna-RM-nBO" secondAttribute="leading" id="3e9-8I-C7O"/>
-                <constraint firstItem="5mI-gS-xH9" firstAttribute="top" secondItem="ysT-Br-eSf" secondAttribute="bottom" constant="11" id="4eS-8i-EmI"/>
+                <constraint firstItem="5mI-gS-xH9" firstAttribute="top" secondItem="Qe1-sK-Yxe" secondAttribute="bottom" constant="11" id="4eS-8i-EmI"/>
+                <constraint firstItem="Qe1-sK-Yxe" firstAttribute="leading" secondItem="ysT-Br-eSf" secondAttribute="leading" id="Gvz-Ld-001"/>
+                <constraint firstItem="Qe1-sK-Yxe" firstAttribute="top" secondItem="ysT-Br-eSf" secondAttribute="bottom" constant="8" id="Gvz-Tp-002"/>
+                <constraint firstItem="bWg-uC-6W8" firstAttribute="leading" secondItem="Qe1-sK-Yxe" secondAttribute="trailing" constant="12" id="Mrm-Ld-003"/>
+                <constraint firstItem="bWg-uC-6W8" firstAttribute="centerY" secondItem="Qe1-sK-Yxe" secondAttribute="centerY" id="Mrm-Cy-004"/>
                 <constraint firstItem="2I4-c8-jan" firstAttribute="leading" secondItem="M0W-YD-Ouk" secondAttribute="leading" id="8Mw-X4-Li9"/>
                 <constraint firstItem="u5h-MS-cR3" firstAttribute="trailing" secondItem="5mI-gS-xH9" secondAttribute="trailing" id="9cD-Rw-29O"/>
                 <constraint firstAttribute="trailing" secondItem="bih-Hu-dSj" secondAttribute="trailing" constant="20" id="9gU-rZ-Jh2"/>
