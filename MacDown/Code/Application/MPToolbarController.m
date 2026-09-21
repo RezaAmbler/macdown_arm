@@ -168,11 +168,12 @@ static CGFloat itemWidth = 37;
 
     for (NSString *itemIdentifier in orderedToolbarItemIdentifiers)
     {
-        // exclude some toolbar items from the default toolbar
+        // exclude some toolbar items from the default toolbar.
+        // "appearance" is deliberately included: it is how Light/Dark/Sepia
+        // is reached without going to the View menu.
         if ([itemIdentifier  isEqual: @"comment"]
             || [itemIdentifier  isEqual: @"highlight"]
-            || [itemIdentifier  isEqual: @"strikethrough"]
-            || [itemIdentifier  isEqual: @"appearance"]) {
+            || [itemIdentifier  isEqual: @"strikethrough"]) {
             // do nothing here
         }else {
             [defaultItemIdentifiers addObject:itemIdentifier];
