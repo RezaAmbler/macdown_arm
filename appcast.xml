@@ -6,16 +6,46 @@
     <description>Updates for RezaAmbler's Apple Silicon MacDown fork.</description>
     <language>en</language>
     <item>
-      <title>Version 0.8.1 (arm64)</title>
-      <description><![CDATA[ Test update to verify in-app auto-update works (font zoom, view modes, TOC links — same as 0.8.0). ]]></description>
-      <pubDate>Sat, 30 May 2026 00:48:27 +0000</pubDate>
-      <sparkle:version>1120</sparkle:version>
-      <sparkle:shortVersionString>0.8.1</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>10.13</sparkle:minimumSystemVersion>
+      <title>Version 0.9.0 (arm64)</title>
+      <description><![CDATA[ MacDown now runs on current macOS and renders its preview with WKWebView.
+
+**Requires macOS 14 or later, on an Apple Silicon Mac.**
+
+### Why this release exists
+
+Upstream MacDown is unmaintained and its Homebrew cask was disabled for failing the macOS Gatekeeper check. This fork builds and runs on macOS 27 with Xcode 27, and replaces the preview's long-deprecated `WebView` with `WKWebView` before Apple removes it.
+
+### Preview
+
+* The preview is now a `WKWebView`. Everything that depended on reading the page synchronously -- scroll syncing, the split-view divider colour, the word count -- was rebuilt over an injected JavaScript bridge.
+* Font zoom uses the public `pageZoom` API rather than private WebKit SPI, and printing uses the public print operation.
+* Local images referenced relative to a document load again, through a private URL scheme, since WKWebView refuses `file:` subresources.
+* MathJax keeps using MacDown's patched loader, now inlined and pointed at the CDN, because request rewriting is not possible with WKWebView.
+
+### Rendering
+
+* Syntax highlighting, mermaid, Graphviz, MathJax, task lists, footnotes, the table-of-contents token, front matter and the code-block language label are all **on by default**. Options that reinterpret ordinary prose -- underline, the quote extension, inline-dollar maths and hard wrap -- are deliberately left off.
+* mermaid and Graphviz are only loaded when a document actually contains a diagram. Previously the preference alone pulled in 4.7 MB of JavaScript on every render.
+* Fixed the **GitHub-2020 stylesheet, which shipped empty in 0.8.0 and 0.8.1** -- selecting it produced an unstyled preview. If you have used MacDown before, delete `~/Library/Application Support/MacDown/Styles/GitHub-2020.css` so the fixed copy is installed.
+
+### Interface
+
+* Preferences no longer resizes when you switch panes, and the toolbar no longer collapses into a `>>` menu. The Rendering pane's Graphviz and Mermaid checkboxes no longer overlap the line-numbers row.
+* Font zoom is **Control-=** and **Control--** (previously Control-Command).
+* Light / Dark / Sepia is now a toolbar control.
+
+### Build
+
+* Builds with Homebrew CocoaPods; the Bundler path no longer installs on current macOS.
+* Debug and Release both build cleanly -- Debug previously did not build at all. ]]></description>
+      <pubDate>Mon, 21 Sep 2026 01:49:04 +0000</pubDate>
+      <sparkle:version>1138</sparkle:version>
+      <sparkle:shortVersionString>0.9.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <enclosure
-        url="https://github.com/RezaAmbler/macdown_arm/releases/download/v0.8.1/MacDown-arm64.zip"
-        sparkle:edSignature="+0I2kY9/vZMFm9NNRn5symz+sLB5jE6MwLz3bLop/M+w8XFrOCqlzDCwEW4ysoGxImRL175J3oxHRvV5RdqXCw=="
-        length="7790893"
+        url="https://github.com/RezaAmbler/macdown_arm/releases/download/v0.9.0/MacDown-arm64.zip"
+        sparkle:edSignature="CD88qnL0W0hWfpzHuUxIj/JI5KUcKwHM5JN7CSvz6SdAplO1azlR0UzkgPLOWQ96SBIQQyRb/uduJcuY0q/0Dg=="
+        length="7771416"
         type="application/octet-stream" />
     </item>
   </channel>
