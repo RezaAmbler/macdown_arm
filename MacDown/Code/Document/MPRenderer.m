@@ -19,13 +19,20 @@
 #import "MPAsset.h"
 #import "MPPreferences.h"
 
-// Warning: If the version of MathJax is ever updated, please check the status
-// of https://github.com/mathjax/MathJax/issues/548. If the fix has been merged
-// in to MathJax, then the WebResourceLoadDelegate can be removed from MPDocument
-// and MathJax.js can be removed from this project.
-static NSString * const kMPMathJaxCDN =
-    @"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js"
-    @"?config=TeX-AMS-MML_HTMLorMML";
+// MacDown ships a patched copy of the MathJax 2.7.3 loader (Resources/MathJax)
+// that does not hang when a resource fails to load -- see
+// https://github.com/mathjax/MathJax/issues/548.
+//
+// The legacy WebView substituted that patched loader for the CDN one by
+// rewriting the request in a WebResourceLoadDelegate. WKWebView cannot
+// intercept https loads, so instead the patched loader is inlined directly
+// into the page and pointed at the CDN for everything else it needs (config,
+// jax, fonts) via MathJax.AuthorConfig.root, which the loader honours.
+//
+// MathJax therefore still requires a network connection, exactly as before.
+static NSString * const kMPMathJaxCDNRoot =
+    @"https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3";
+static NSString * const kMPMathJaxConfigName = @"TeX-AMS-MML_HTMLorMML.js";
 static NSString * const kMPPrismScriptDirectory = @"Prism/components";
 static NSString * const kMPPrismThemeDirectory = @"Prism/themes";
 static NSString * const kMPPrismPluginDirectory = @"Prism/plugins";
@@ -426,15 +433,32 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
 - (NSArray *)mathjaxScripts
 {
     NSMutableArray *scripts = [NSMutableArray array];
-    NSURL *url = [NSURL URLWithString:kMPMathJaxCDN];
     NSBundle *bundle = [NSBundle mainBundle];
-    MPEmbeddedScript *script =
+
+    // 1. Tell the loader where to fetch everything else from, and which
+    //    config to use. This replaces the "?config=" query string the CDN
+    //    URL used to carry, and must run before the loader itself.
+    NSString *authorConfig =
+        [NSString stringWithFormat:
+            @"window.MathJax = { root: \"%@\", config: [\"%@\"] };",
+            kMPMathJaxCDNRoot, kMPMathJaxConfigName];
+    [scripts addObject:[MPInlineScript scriptWithContent:authorConfig]];
+
+    // 2. MacDown's own MathJax configuration, picked up by the loader.
+    [scripts addObject:
         [MPEmbeddedScript assetWithURL:[bundle URLForResource:@"init"
                                                 withExtension:@"js"
                                                  subdirectory:@"MathJax"]
-                               andType:kMPMathJaxConfigType];
-    [scripts addObject:script];
-    [scripts addObject:[MPScript javaScriptWithURL:url]];
+                               andType:kMPMathJaxConfigType]];
+
+    // 3. The patched loader, inlined. Embedding rather than linking is what
+    //    lets us keep using the patched copy now that requests can no longer
+    //    be rewritten; it also means exported HTML carries the same fix.
+    [scripts addObject:
+        [MPEmbeddedScript assetWithURL:[bundle URLForResource:@"MathJax"
+                                                withExtension:@"js"
+                                                 subdirectory:@"MathJax"]
+                               andType:kMPJavaScriptType]];
     return scripts;
 }
 
@@ -482,6 +506,70 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     return scripts;
 }
 
+/** Whether the current document actually contains a mermaid diagram.
+ *
+ * -currentLanguages holds the info string of every fenced code block in the
+ * document, so this is simply whether one of them is a mermaid block --
+ * which is exactly what mermaid.init.js goes looking for
+ * (".language-mermaid").
+ */
+- (BOOL)currentDocumentUsesMermaid
+{
+    return [self.currentLanguages containsObject:@"mermaid"];
+}
+
+/** Whether the current document actually contains a Graphviz diagram.
+ *
+ * viz.init.js scans for "code.language-<engine>" for each supported engine,
+ * so a document uses Graphviz if it fences a block with any of those names.
+ */
+- (BOOL)currentDocumentUsesGraphviz
+{
+    static NSSet *engines = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        engines = [NSSet setWithArray:@[@"circo", @"dot", @"fdp",
+                                        @"neato", @"osage", @"twopi"]];
+    });
+
+    for (NSString *language in self.currentLanguages)
+    {
+        if ([engines containsObject:language])
+            return YES;
+    }
+    return NO;
+}
+
+/** Whether the current document appears to contain any mathematics.
+ *
+ * MathJax fetches its configuration, jax and fonts from a CDN as soon as it
+ * loads, so including it in a document with no formulas costs a network
+ * round trip for nothing. Checking first keeps that to documents that need
+ * it.
+ *
+ * Deliberately generous: these are the only delimiters MathJax is configured
+ * for, and erring towards including it merely wastes a request, whereas
+ * leaving it out of a document that needs it would fail to typeset.
+ */
+- (BOOL)currentDocumentUsesMathJax
+{
+    NSString *html = self.currentHtml;
+    if (!html.length)
+        return NO;
+
+    if ([html rangeOfString:@"$$"].location != NSNotFound
+        || [html rangeOfString:@"\\("].location != NSNotFound
+        || [html rangeOfString:@"\\["].location != NSNotFound)
+        return YES;
+
+    // With inline-dollar enabled a single "$" pair also delimits math.
+    if ([MPPreferences sharedInstance].htmlMathJaxInlineDollar
+        && [html rangeOfString:@"$"].location != NSNotFound)
+        return YES;
+
+    return NO;
+}
+
 - (NSArray *)stylesheets
 {
     id<MPRendererDelegate> delegate = self.delegate;
@@ -491,11 +579,11 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     {
         [stylesheets addObjectsFromArray:self.prismStylesheets];
         // mermaid
-        if ([delegate rendererHasMermaid:self])
+        if ([delegate rendererHasMermaid:self] && self.currentDocumentUsesMermaid)
         {
             [stylesheets addObjectsFromArray:self.mermaidStylesheets];
         }
-        
+
     }
 
     if ([delegate rendererCodeBlockAccesory:self] == MPCodeBlockAccessoryCustom)
@@ -518,13 +606,18 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     if ([d rendererHasSyntaxHighlighting:self])
     {
         [scripts addObjectsFromArray:self.prismScripts];
-        // mermaid
-        if ([d rendererHasMermaid:self])
+
+        // These two are only pulled in when the document actually contains a
+        // diagram. mermaid.min.js is 1.1 MB and viz.js is 3.6 MB, and assets
+        // are inlined into the page rather than linked, so including them
+        // unconditionally would put nearly 5 MB into every render -- which
+        // happens roughly twice a second while typing. Gating on content is
+        // what makes it reasonable for these to be on by default.
+        if ([d rendererHasMermaid:self] && self.currentDocumentUsesMermaid)
         {
             [scripts addObjectsFromArray:self.mermaidScripts];
         }
-        // graphviz
-        if ([d rendererHasGraphviz:self])
+        if ([d rendererHasGraphviz:self] && self.currentDocumentUsesGraphviz)
         {
             [scripts addObjectsFromArray:self.graphvizScripts];
         }
@@ -548,14 +641,32 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
         // Parse in backgound
         [self parseMarkdown:markdown];
         
-        // Wait untils is renderer has finished loading OR until the maxDelay has passed
-        // This should result in overall faster update times
+        // Wait until the preview has finished loading, or until maxDelay has
+        // passed. This results in overall faster update times.
+        //
+        // The timeout used to be written as `[start timeIntervalSinceNow] >=
+        // maxDelay`, combined with ||. timeIntervalSinceNow counts backwards
+        // from a date in the past, so that term was negative and maxDelay
+        // positive: it was never true, and the condition collapsed to "loop
+        // while loading", with no timeout and nothing yielding the CPU.
+        //
+        // That was merely wasteful with the old WebView. With WKWebView the
+        // page is rendered by a separate process that can stall or be
+        // jettisoned, leaving isLoading stuck at YES -- and this is a
+        // background thread spinning dispatch_sync against the main queue,
+        // so it would peg a core indefinitely.
+        //
+        // Waiting is only an optimisation in any case: a render that arrives
+        // mid-load is held by alreadyRenderingInWeb and replayed when the
+        // navigation finishes.
         NSDate *start = [NSDate date];
-        __block BOOL rendererIsLoading = true;
-        while (rendererIsLoading || [start timeIntervalSinceNow] >= maxDelay) {
+        __block BOOL rendererIsLoading = YES;
+        while (rendererIsLoading && -[start timeIntervalSinceNow] < maxDelay) {
             dispatch_sync(dispatch_get_main_queue(), ^{
                 rendererIsLoading = [self.dataSource rendererLoading];
             });
+            if (rendererIsLoading)
+                usleep(5000);
         }
         
         // Render on main thread
@@ -648,9 +759,16 @@ NS_INLINE void MPFreeHTMLRenderer(hoedown_renderer *htmlRenderer)
     id<MPRendererDelegate> delegate = self.delegate;
 
     NSString *title = [self.dataSource rendererHTMLTitle:self];
+
+    // Assets are inlined rather than linked. WKWebView will not load local
+    // file subresources for every configuration we care about, and inlining
+    // sidesteps the question entirely. MathJax is a remote CDN URL, so it
+    // keeps falling through to a <script src> -- see -mathjaxScripts.
+    // MPAsset caches file contents, so this does not re-read from disk on
+    // every keystroke.
     NSString *html = MPGetHTML(
-        title, self.currentHtml, self.stylesheets, MPAssetFullLink,
-        self.scripts, MPAssetFullLink);
+        title, self.currentHtml, self.stylesheets, MPAssetEmbedded,
+        self.scripts, MPAssetEmbedded);
     [delegate renderer:self didProduceHTMLOutput:html];
 
     self.styleName = [delegate rendererStyleName:self];

@@ -9,6 +9,7 @@
 #import "MPPreferences.h"
 #import "NSUserDefaults+Suite.h"
 #import "MPGlobals.h"
+#import "MPRenderer.h"
 
 
 typedef NS_ENUM(NSUInteger, MPUnorderedListMarkerType)
@@ -248,6 +249,8 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
     self.extensionTables = YES;
     self.extensionFencedCode = YES;
     self.extensionFootnotes = YES;
+    // The rendering features are handled by -loadDefaultUserDefaults, which
+    // runs on every launch and so covers upgrades as well as fresh installs.
     self.editorBaseFontInfo = @{
         kMPDefaultEditorFontNameKey: kMPDefaultEditorFontName,
         kMPDefaultEditorFontPointSizeKey: @(kMPDefaultEditorFontPointSize),
@@ -284,6 +287,63 @@ static NSString * const kMPDefaultHtmlStyleName = @"GitHub2";
         self.editorInsertPrefixInBlock = YES;
     if (![defaults objectForKey:@"htmlTemplateName"])
         self.htmlTemplateName = @"Default";
+    [self loadDefaultRenderingPreferences];
+}
+
+/** Turn the rendering features on unless the user has an opinion.
+ *
+ * MacDown historically shipped with almost everything switched off, so a
+ * fenced mermaid block, a formula or a task list came out as literal text
+ * until you went hunting through Preferences. This fork turns them on.
+ *
+ * Every key is guarded on -objectForKey:, so this only ever supplies a value
+ * the user has never set. Switching something off in Preferences writes the
+ * key, and it is then left alone. That is also why this is safe to call from
+ * -loadDefaultUserDefaults, which runs on every launch: existing installs
+ * pick up the new defaults for features they never touched, without losing
+ * any choice they did make.
+ *
+ * Deliberately NOT enabled, because they reinterpret ordinary prose rather
+ * than acting on explicit markup:
+ *
+ *  - extensionUnderline turns _text_ into underline instead of italics
+ *  - extensionQuote rewrites every "quoted" phrase as a <q> element
+ *  - htmlMathJaxInlineDollar makes "$5 and $10" render as mathematics
+ *  - htmlHardWrap turns every single newline into a line break
+ *
+ * htmlLineNumbers is left off as well; it is purely cosmetic and adds a
+ * gutter to every code block.
+ */
+- (void)loadDefaultRenderingPreferences
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    NSArray<NSString *> *enabledByDefault = @[
+        // Markdown extensions that only act on explicit syntax.
+        @"extensionAutolink",
+        @"extensionStrikethough",
+        @"extensionHighlight",
+        @"extensionSuperscript",
+        @"extensionSmartyPants",
+        // Preview features.
+        @"htmlSyntaxHighlighting",
+        @"htmlMermaid",
+        @"htmlGraphviz",
+        @"htmlMathJax",
+        @"htmlTaskList",
+        @"htmlRendersTOC",
+        @"htmlDetectFrontMatter",
+    ];
+
+    for (NSString *key in enabledByDefault)
+    {
+        if (![defaults objectForKey:key])
+            [self setValue:@YES forKey:key];
+    }
+
+    // Label each code block with its language.
+    if (![defaults objectForKey:@"htmlCodeBlockAccessory"])
+        self.htmlCodeBlockAccessory = MPCodeBlockAccessoryLanguageName;
 }
 
 @end

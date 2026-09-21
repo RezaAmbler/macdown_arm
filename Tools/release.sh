@@ -30,7 +30,7 @@ export DEVELOPER_DIR="$DEVELOPER_DIR_PATH"
 export LANG=en_US.UTF-8
 xcodebuild -workspace MacDown.xcworkspace -scheme MacDown \
     -configuration Release -arch arm64 ONLY_ACTIVE_ARCH=YES \
-    MACOSX_DEPLOYMENT_TARGET=10.13 CODE_SIGN_IDENTITY="-" \
+    MACOSX_DEPLOYMENT_TARGET=14.0 CODE_SIGN_IDENTITY="-" \
     CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES build >/tmp/macdown_release_build.log 2>&1 \
     || { echo "BUILD FAILED — see /tmp/macdown_release_build.log"; exit 1; }
 
@@ -65,7 +65,25 @@ gh release create "$TAG" "$ZIP" --repo "$REPO" \
     --title "MacDown $SHORT (arm64)" \
     --notes "$NOTES
 
-Ad-hoc signed (not notarized). On first launch right-click the app and choose Open, or run: xattr -dr com.apple.quarantine /Applications/MacDown.app"
+Requires macOS 14 or later on an Apple Silicon Mac.
+
+**Installing:** unzip and drag MacDown.app to Applications.
+
+These builds are ad-hoc signed rather than notarized, so macOS will refuse to
+open the app the first time and say it cannot verify the developer. To allow
+it: double-click MacDown once, dismiss the warning, then open **System
+Settings -> Privacy & Security**, scroll to **Security**, and click **Open
+Anyway** next to the message about MacDown.
+
+(Older advice to Control-click the app and choose Open no longer works; Apple
+removed that route in macOS 15.)
+
+From a terminal, the equivalent is:
+
+    xattr -dr com.apple.quarantine /Applications/MacDown.app
+
+This is a one-time step. Updates installed by MacDown's own updater are not
+quarantined and need none of the above."
 
 echo "==> Updating appcast.xml"
 URL="https://github.com/$REPO/releases/download/$TAG/$ASSET"
@@ -84,7 +102,7 @@ cat > appcast.xml <<XML
       <pubDate>$PUBDATE</pubDate>
       <sparkle:version>$BUNDLE</sparkle:version>
       <sparkle:shortVersionString>$SHORT</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>10.13</sparkle:minimumSystemVersion>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <enclosure
         url="$URL"
         sparkle:edSignature="$EDSIG"

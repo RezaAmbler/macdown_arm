@@ -17,6 +17,54 @@ NSString * const kMPJavaScriptType = @"text/javascript";
 NSString * const kMPMathJaxConfigType = @"text/x-mathjax-config";
 
 
+/**
+ * Read a file for inline embedding, caching the contents in memory.
+ *
+ * The preview embeds every stylesheet and script on each render, and a render
+ * happens roughly twice a second while typing. Some of these are large --
+ * viz.js is 3.6 MB and mermaid.min.js is 1.1 MB -- so re-reading them from
+ * disk each time is wasteful.
+ *
+ * Styles and themes live in ~/Library/Application Support/MacDown and can be
+ * edited by the user while MacDown is running, so the cache is keyed on the
+ * file's modification date as well as its path and re-reads when that moves.
+ */
+static NSString *MPCachedFileContents(NSString *path)
+{
+    if (!path)
+        return @"";
+
+    static NSCache *cache = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        cache = [[NSCache alloc] init];
+    });
+
+    NSDate *modified =
+        [[[NSFileManager defaultManager] attributesOfItemAtPath:path error:NULL]
+            objectForKey:NSFileModificationDate];
+
+    // A file we cannot stat is read straight through, uncached.
+    if (!modified)
+        return MPReadFileOfPath(path);
+
+    NSString *key =
+        [NSString stringWithFormat:@"%@\n%f", path, modified.timeIntervalSince1970];
+
+    @synchronized (cache)
+    {
+        NSString *cached = [cache objectForKey:key];
+        if (cached)
+            return cached;
+
+        NSString *content = MPReadFileOfPath(path);
+        if (content)
+            [cache setObject:content forKey:key cost:content.length];
+        return content;
+    }
+}
+
+
 @interface MPAsset ()
 @property (strong) NSURL *url;
 @property (copy, nonatomic) NSString *typeName;
@@ -78,7 +126,7 @@ NSString * const kMPMathJaxConfigType = @"text/x-mathjax-config";
         case MPAssetEmbedded:
             if (self.url.isFileURL)
             {
-                NSString *content = MPReadFileOfPath(self.url.path);
+                NSString *content = MPCachedFileContents(self.url.path);
                 if ([content hasSuffix:@"\n"])
                     content = [content substringToIndex:content.length - 1];
                 context[@"content"] = content;
@@ -186,6 +234,34 @@ NSString * const kMPMathJaxConfigType = @"text/x-mathjax-config";
     if (option == MPAssetFullLink)
         option = MPAssetEmbedded;
     return [super htmlForOption:option];
+}
+
+@end
+
+
+@implementation MPInlineScript
+{
+    NSString *_content;
+}
+
++ (instancetype)scriptWithContent:(NSString *)content
+{
+    MPInlineScript *script = [[self alloc] initWithURL:nil
+                                              andType:kMPJavaScriptType];
+    if (script)
+        script->_content = [content copy];
+    return script;
+}
+
+- (NSString *)htmlForOption:(MPAssetOption)option
+{
+    if (option == MPAssetNone || !_content.length)
+        return nil;
+
+    // Always inlined, whichever option is asked for: there is no file to
+    // link to.
+    return [NSString stringWithFormat:@"<script type=\"%@\">\n%@\n</script>",
+                                      kMPJavaScriptType, _content];
 }
 
 @end

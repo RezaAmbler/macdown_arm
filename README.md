@@ -1,19 +1,45 @@
-# MacDown
+# MacDown (Apple Silicon fork)
 
-[![](https://img.shields.io/github/release/MacDownApp/macdown.svg)](http://macdown.uranusjr.com/download/latest/)
-![Total downloads](https://img.shields.io/github/downloads/MacDownApp/macdown/latest/total.svg)
-[![Build Status](https://travis-ci.org/MacDownApp/macdown.svg?branch=master)](https://travis-ci.org/MacDownApp/macdown)
+MacDown is an open source Markdown editor for macOS, released under the MIT
+License. The author stole the idea from [Chen Luo](https://twitter.com/chenluois)’s
+[Mou](http://mouapp.com) so that people can make crappy clones.
 
+This is a fork of [MacDownApp/macdown](https://github.com/MacDownApp/macdown),
+which is no longer maintained — its Homebrew cask was disabled in 2026 for
+failing the macOS Gatekeeper check. This fork builds natively for Apple
+Silicon, runs on current macOS, and renders the preview with `WKWebView`
+instead of the long-deprecated `WebView`.
 
-MacDown is an open source Markdown editor for OS X, released under the MIT License. The author stole the idea from [Chen Luo](https://twitter.com/chenluois)’s [Mou](http://mouapp.com) so that people can make crappy clones.
-
-Visit the [project site](http://macdown.uranusjr.com/) for more information, or download [MacDown.app.zip](http://macdown.uranusjr.com/download/latest/) directly from the [latest releases](https://github.com/MacDownApp/macdown/releases/latest) page.
+Requires **macOS 14 or later** on an **Apple Silicon** Mac.
 
 ## Install
 
-[Download](http://macdown.uranusjr.com/download/latest/), unzip, and drag the app to Applications folder. MacDown is also available through [Homebrew Cask](https://caskroom.github.io/):
+Download `MacDown-arm64.zip` from the
+[latest release](https://github.com/RezaAmbler/macdown_arm/releases/latest),
+unzip it, and drag `MacDown.app` to your Applications folder.
 
-    brew install --cask macdown
+### First launch
+
+These builds are ad-hoc signed rather than notarized by Apple, so macOS will
+refuse to open the app the first time and say it cannot verify the developer.
+This is expected. To allow it:
+
+1. Double-click MacDown once and dismiss the warning.
+2. Open **System Settings → Privacy & Security**.
+3. Scroll to the **Security** section, find the message about MacDown being
+   blocked, and click **Open Anyway**.
+4. Confirm with Touch ID or your password.
+
+> Older instructions tell you to Control-click the app and choose *Open*.
+> Apple removed that route in macOS 15, so on a current system the Privacy &
+> Security panel is the way.
+
+If you would rather do it from a terminal, this has the same effect:
+
+    xattr -dr com.apple.quarantine /Applications/MacDown.app
+
+You only have to do this once. Updates delivered through the app's own
+updater are not quarantined, so they install without any of the above.
 
 ## Screenshot
 
@@ -49,27 +75,34 @@ The following editor themes and CSS files are extracted from [Mou](http://mouapp
 
 If you wish to build MacDown yourself, you will need the following components/tools:
 
-* OS X SDK (10.14 or later)
+* Xcode 27 or later (tested on Xcode 27.0 / macOS 27)
+* A Mac running macOS 14.0 or later (this fork is Apple Silicon only)
 * Git
-* [Bundler](http://bundler.io)
+* CocoaPods 1.17 or later
 
-> Note: Old versions of CocoaPods are not supported. Please use Bundler to execute CocoaPods, or make sure your CocoaPods is later than shown in `Gemfile.lock`.
+Install CocoaPods with Homebrew:
 
-> Note: The Command Line Tools (CLT) should be unnecessary. If you failed to compile without it, please install CLT with
+    brew install cocoapods
+
+> Note: do **not** use the system Ruby with Bundler to run CocoaPods. macOS 27's
+> bundled Ruby 2.6 can no longer compile the native extensions the older
+> CocoaPods releases depend on. The Homebrew formula ships its own Ruby and is
+> the supported path.
+
+> Note: the Command Line Tools (CLT) should be unnecessary, and an out-of-date
+> CLT can actively break the build — its SDK may shadow Xcode's. If a
+> dependency's `./configure` step fails to link, point the build at Xcode's SDK
+> explicitly:
 >
->     xcode-select --install
->
-> and report back.
-
-An appropriate SDK should be bundled with Xcode 5 or later versions.
+>     export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+>     export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
 
 ### Environment Setup
 
 After cloning the repository, run the following commands inside the repository root (directory containing this `README.md` file):
 
     git submodule update --init
-    bundle install
-    bundle exec pod install
+    pod install
     make -C Dependency/peg-markdown-highlight
 
 and open `MacDown.xcworkspace` in Xcode. The first command initialises the dependency submodule(s) used in MacDown; the second one installs dependencies managed by CocoaPods.
@@ -77,7 +110,17 @@ and open `MacDown.xcworkspace` in Xcode. The first command initialises the depen
 Refer to the official guides of Git and CocoaPods if you need more instructions. If you run into build issues later on, try running the following commands to update dependencies:
 
     git submodule update
-    bundle exec pod install
+    pod install
+
+### Regenerating the GitHub-2020 style
+
+`MacDown/Resources/Styles/GitHub-2020.css` is generated from `index.sass` but is
+committed to the repository, so a normal build needs no Node toolchain. To
+regenerate it after changing the source:
+
+    cd Tools/GitHub-style-generator
+    npm install
+    make
 
 ### Translation
 
@@ -87,11 +130,14 @@ Please help translation on [Transifex](https://www.transifex.com/macdown/macdown
 
 ## Discussion
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/MacDownApp/macdown)
+Problems with *this fork* belong in
+[its issue tracker](https://github.com/RezaAmbler/macdown_arm/issues) — please
+**search first** in case it is already reported. The upstream project is no
+longer maintained, so filing there is unlikely to reach anyone.
 
-Join our [Gitter channel](https://gitter.im/MacDownApp/macdown) if you have any problems with MacDown. Any suggestions are welcomed, too!
-
-You can also [file an issue directly](https://github.com/MacDownApp/macdown/issues/new) on GitHub if you prefer so. But please, **search first to make sure no-one has reported the same issue already** before opening one yourself. MacDown does not update in your computer immediately when we make changes, so something you experienced might be known, or even fixed in the development version.
+If the problem also happens in upstream MacDown 0.8.x, say so in the report:
+it helps to know whether something is a fork regression or has been there all
+along.
 
 MacDown depends a lot on other open source projects, such as [Hoedown](https://github.com/hoedown/hoedown) for Markdown-to-HTML rendering, [Prism](http://prismjs.com) for syntax highlighting (in code blocks), and [PEG Markdown Highlight](https://github.com/ali-rantakari/peg-markdown-highlight) for editor highlighting. If you find problems when using those particular features, you can also consider reporting them directly to upstream projects as well as to MacDown’s issue tracker. I will do what I can if you report it here, but sometimes it can be more beneficial to interact with them directly.
 

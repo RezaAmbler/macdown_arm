@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pushd `dirname $0` > /dev/null
+pushd "$(dirname "$0")" > /dev/null
 source "$(pwd -P)"/utils.sh
 popd > /dev/null
 
